@@ -1,0 +1,165 @@
+import React, { useState } from "react";
+import Lightfall from "./components/Lightfall";
+
+const services = [
+  {icon:"◈", title:"Managed IT Services", tag:"MSP", text:"Proactive monitoring, helpdesk, patching, endpoint management, backups and lifecycle planning — with one accountable technology partner."},
+  {icon:"⌁", title:"Cybersecurity", tag:"SECURITY", text:"Layered protection for identities, endpoints, email, networks and data, backed by practical security governance."},
+  {icon:"◉", title:"IT Solutions & Infrastructure", tag:"INFRASTRUCTURE", text:"Business networks, Wi-Fi, servers, cloud platforms, Microsoft 365, hardware, migrations and structured technology projects."},
+  {icon:"</>", title:"Web & Application Development", tag:"SOFTWARE", text:"Modern websites, portals, business applications, APIs and integrations designed around real operational workflows."},
+  {icon:"⚙", title:"DevOps & Cloud Engineering", tag:"DEVOPS", text:"CI/CD pipelines, source control, environments, containers, observability, deployment automation and cloud-ready application delivery."},
+  {icon:"▣", title:"IT Procurement & Technology", tag:"TECHNOLOGY", text:"Technology sourcing, deployment and lifecycle management for laptops, desktops, networking, printers and business infrastructure."}
+];
+
+const capabilities = [
+  "24/7 remote monitoring & support", "Microsoft 365 & cloud management", "Endpoint & identity security",
+  "Network design, Wi-Fi & firewall", "Backup & disaster recovery", "Websites & customer portals",
+  "Custom business applications", "API & systems integration", "CI/CD & release automation",
+  "Cloud architecture & migration", "IT asset lifecycle management", "Technical consulting"
+];
+
+const industries = ["SMEs","Professional Services","Healthcare","Construction","Retail","Education","Hospitality","Non-Profits"];
+
+const faqs = [
+  ["What does an MSP do for a business?","An MSP becomes your ongoing technology partner: monitoring systems, resolving issues, managing devices and cloud services, improving security and helping plan technology before it becomes a business problem."],
+  ["Can you handle both IT support and software development?","Yes. The new positioning combines Managed IT, IT Solutions and Web/Application Development & DevOps so a client can work with one technology partner across infrastructure and software."],
+  ["Do you support Microsoft 365?","Yes. Microsoft 365 support can include user administration, email, security configuration, licensing guidance, migrations and ongoing management."],
+  ["Can you build a custom business portal?","Yes. We can scope customer portals, internal management systems, dashboards, workflow applications, APIs and integrations around your business process."],
+  ["Do you offer cybersecurity for smaller businesses?","Yes. Security should scale to the business. We focus on practical controls such as identity protection, endpoint security, backups, email security, network protection and security awareness."],
+  ["Can you manage a website after development?","Yes. Website/application maintenance, hosting coordination, monitoring, backups, updates and ongoing development can be part of the support relationship."]
+];
+
+function App(){
+  const [menuOpen,setMenuOpen]=useState(false);
+  const [openFaq,setOpenFaq]=useState(0);
+  const [form,setForm]=useState({name:"",email:"",company:"",service:"",message:""});
+  const [sent,setSent]=useState(false);
+
+  const submit=(e)=>{
+    e.preventDefault();
+    const body=`Name: ${form.name}%0ACompany: ${form.company}%0AEmail: ${form.email}%0AService: ${form.service}%0A%0A${form.message}`;
+    window.location.href=`mailto:info@mbulahenigroup.co.za?subject=Cyber I.T Masters enquiry - ${encodeURIComponent(form.service)}&body=${body}`;
+    setSent(true);
+  };
+
+  return <div className="app">
+    <header className="nav">
+      <a href="#home" className="brand"><img src="/logo.png" alt="Cyber I.T Masters" onError={e=>e.currentTarget.style.display="none"}/><span><b>CYBER</b> I.T MASTERS<small>IT MSP · SOLUTIONS · SOFTWARE</small></span></a>
+      <button className="menu-btn" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
+      <nav className={menuOpen?"nav-links open":"nav-links"}>
+        {["Services","Solutions","DevOps","Industries","Process","Contact"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenuOpen(false)}>{x}</a>)}
+        <a className="nav-cta" href="#contact">Book an Assessment →</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="home" className="hero">
+        <Lightfall
+          colors={["#A6C8FF", "#5227FF", "#FF9FFC"]}
+          backgroundColor="#0A29FF"
+          speed={1}
+          streakCount={8}
+          streakWidth={1}
+          streakLength={1}
+          glow={1}
+          density={1}
+          twinkle={1}
+          zoom={2}
+          backgroundGlow={1}
+          opacity={1}
+          mouseInteraction={true}
+          mouseStrength={1}
+          mouseRadius={0.6}
+          mouseDampening={0.15}
+          className="hero-lightfall"
+        />
+        <div className="hero-grid">
+          <div className="hero-copy">
+            <div className="eyebrow"><span className="pulse"></span> TECHNOLOGY PARTNER · POLOKWANE · SOUTH AFRICA</div>
+            <h1>IT THAT <em>WORKS.</em><br/>SOLUTIONS THAT <em>SCALE.</em></h1>
+            <p className="hero-lead">Cyber I.T Masters is a full-service technology partner delivering <strong>Managed IT, IT Solutions, Cybersecurity, Web & Application Development and DevOps</strong> for businesses that cannot afford technology to slow them down.</p>
+            <div className="hero-actions"><a className="btn primary" href="#contact">Start a Technology Assessment</a><a className="btn ghost" href="#services">Explore Services ↓</a></div>
+            <div className="trust-row"><span>✓ Proactive IT</span><span>✓ Security-first</span><span>✓ Business-focused</span><span>✓ One technology partner</span></div>
+          </div>
+          <div className="hero-panel">
+            <div className="panel-top"><span>CYBER I.T / COMMAND CENTRE</span><i>LIVE</i></div>
+            <div className="panel-status"><span className="status-dot"></span><b>Technology operations</b><span>Protected</span></div>
+            <div className="signal"><div><strong>MSP</strong><small>MANAGED IT</small></div><div><strong>SEC</strong><small>CYBERSECURITY</small></div><div><strong>DEV</strong><small>SOFTWARE</small></div></div>
+            <div className="panel-lines"><span>Infrastructure</span><b>Operational</b><span>Security posture</span><b>Monitored</b><span>Cloud & applications</span><b>Scalable</b></div>
+            <div className="panel-footer">ONE PARTNER · MULTIPLE TECHNOLOGY DISCIPLINES</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="metrics">
+        <div><b>01</b><span>MANAGED IT</span><small>Proactive support & monitoring</small></div>
+        <div><b>02</b><span>IT SOLUTIONS</span><small>Infrastructure & cloud</small></div>
+        <div><b>03</b><span>SOFTWARE</span><small>Web & application delivery</small></div>
+        <div><b>04</b><span>DEVOPS</span><small>Automation & deployment</small></div>
+      </section>
+
+      <section id="services" className="section">
+        <div className="section-head"><div><div className="eyebrow">01 / CORE SERVICES</div><h2>THE TECHNOLOGY<br/><em>STACK BEHIND</em> YOUR BUSINESS.</h2></div><p>From everyday IT operations to new digital products, we bring infrastructure, security and software engineering into one accountable service.</p></div>
+        <div className="service-grid">{services.map(s=><article className="service-card" key={s.title}><div className="service-icon">{s.icon}</div><div className="service-tag">{s.tag}</div><h3>{s.title}</h3><p>{s.text}</p><a href="#contact">Discuss this service →</a></article>)}</div>
+      </section>
+
+      <section id="solutions" className="section dark-section">
+        <div className="section-head"><div><div className="eyebrow">02 / IT SOLUTIONS</div><h2>BUILD A <em>STRONGER</em><br/>TECHNOLOGY FOUNDATION.</h2></div><p>Technology should be secure, maintainable and aligned to the way your organisation actually operates.</p></div>
+        <div className="cap-grid">{capabilities.map((c,i)=><div key={c}><span>{String(i+1).padStart(2,"0")}</span><b>{c}</b></div>)}</div>
+        <div className="solution-band"><div><span>NEED A ROADMAP?</span><h3>Turn scattered IT into a managed technology strategy.</h3></div><a className="btn primary" href="#contact">Book a Technology Review →</a></div>
+      </section>
+
+      <section id="devops" className="section">
+        <div className="devops-grid">
+          <div><div className="eyebrow">03 / WEB · APPS · DEVOPS</div><h2>FROM <em>IDEA</em> TO<br/>PRODUCTION.</h2><p className="large-copy">We design and build digital systems that connect your people, customers and operations — then put the engineering discipline around them to keep them reliable.</p><a className="btn primary" href="#contact">Discuss a Software Project →</a></div>
+          <div className="terminal"><div className="terminal-bar"><span></span><span></span><span></span><b>deployment.pipeline</b></div><pre>{`$ git push origin main
+
+✓ lint & type checks
+✓ automated tests
+✓ security scan
+✓ build application
+✓ package release
+✓ deploy staging
+✓ smoke tests
+→ production ready
+
+STATUS:  ALL SYSTEMS GO`}</pre></div>
+        </div>
+        <div className="devops-cards"><article><b>01</b><h3>Websites</h3><p>Fast, responsive, SEO-ready business websites and landing pages.</p></article><article><b>02</b><h3>Applications</h3><p>Portals, dashboards, workflow systems and custom business software.</p></article><article><b>03</b><h3>DevOps</h3><p>Git workflows, CI/CD, environments, deployments and operational visibility.</p></article><article><b>04</b><h3>Integrations</h3><p>APIs, payment, messaging, CRM and third-party platform integrations.</p></article></div>
+      </section>
+
+      <section id="industries" className="section industry-section">
+        <div className="eyebrow">04 / INDUSTRIES</div><h2>TECHNOLOGY FOR<br/><em>REAL OPERATIONS.</em></h2>
+        <p className="section-sub">Solutions are shaped around business risk, users, workflows and growth — not generic technology checklists.</p>
+        <div className="industry-grid">{industries.map((x,i)=><div key={x}><span>0{i+1}</span><b>{x}</b><small>Technology support & solutions</small></div>)}</div>
+      </section>
+
+      <section id="process" className="section dark-section">
+        <div className="eyebrow">05 / DELIVERY MODEL</div><h2>DISCOVER. <em>DESIGN.</em><br/>DELIVER. SUPPORT.</h2>
+        <div className="process-grid">{[["01","Discover","Understand your environment, business goals, risks and pain points."],["02","Design","Build a practical technology roadmap, architecture and delivery plan."],["03","Deliver","Implement, migrate, develop and deploy with controlled change."],["04","Operate","Monitor, support, secure, optimise and continuously improve."]].map(([n,t,d])=><article key={n}><span>{n}</span><h3>{t}</h3><p>{d}</p></article>)}</div>
+      </section>
+
+      <section id="contact" className="section contact-section">
+        <div className="contact-grid">
+          <div><div className="eyebrow">06 / START HERE</div><h2>LET'S FIX<br/><em>YOUR IT.</em></h2><p className="large-copy">Tell us what you are trying to improve, build or protect. We will route the enquiry to the right technology discipline.</p><div className="contact-details"><a href="tel:+27726650565">+27 72 665 0565</a><a href="mailto:info@mbulahenigroup.co.za">info@mbulahenigroup.co.za</a><span>Polokwane · Limpopo · South Africa</span></div></div>
+          <form onSubmit={submit} className="contact-form">
+            <label>Name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
+            <label>Company<input value={form.company} onChange={e=>setForm({...form,company:e.target.value})}/></label>
+            <label>Email<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
+            <label>What do you need?<select required value={form.service} onChange={e=>setForm({...form,service:e.target.value})}><option value="">Select a service</option><option>Managed IT Services</option><option>IT Solutions & Infrastructure</option><option>Cybersecurity</option><option>Microsoft 365 / Cloud</option><option>Website Development</option><option>Application Development</option><option>DevOps / Cloud Engineering</option><option>IT Procurement</option></select></label>
+            <label className="full">Project / IT requirements<textarea required minLength="10" rows="5" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
+            <button className="btn primary full" type="submit">{sent?"Enquiry prepared ✓":"Send Technology Enquiry →"}</button>
+            <small className="form-note">Your enquiry opens your email client. Connect this form to your CRM/API in production.</small>
+          </form>
+        </div>
+      </section>
+
+      <section id="faq" className="section faq-section">
+        <div className="eyebrow">07 / FAQ</div><h2>QUESTIONS, <em>ANSWERED.</em></h2>
+        <div className="faq-list">{faqs.map(([q,a],i)=><div className={openFaq===i?"faq open":"faq"} key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}>{q}<span>+</span></button><div className="faq-answer">{a}</div></div>)}</div>
+      </section>
+    </main>
+
+    <footer><div className="footer-brand">CYBER <em>I.T</em> MASTERS<small>MANAGED IT · IT SOLUTIONS · SOFTWARE · DEVOPS</small></div><div className="footer-links"><a href="#services">Services</a><a href="#solutions">Solutions</a><a href="#devops">Development</a><a href="#contact">Contact</a></div><span>© {new Date().getFullYear()} Cyber I.T Masters · Mbulaheni Group</span></footer>
+  </div>;
+}
+export default App;
