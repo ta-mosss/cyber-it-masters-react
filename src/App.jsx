@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from "react";
+import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
 import HeroBackgroundBoundary from "./components/HeroBackgroundBoundary";
 
 // Deferred: ogl (WebGL) is a non-trivial chunk for a purely decorative
@@ -10,6 +10,10 @@ const SoftAurora = lazy(() => import("./components/SoftAurora"));
 function HeroBackgroundFallback() {
   return <div className="hero-bg-fallback" aria-hidden="true" />;
 }
+
+// Deployed Cloudflare Worker endpoint (see worker/index.js). Replace with
+// the real workers.dev or custom-domain URL once deployed.
+const CONTACT_ENDPOINT = "https://citm-contact.YOUR-SUBDOMAIN.workers.dev";
 
 const services = [
   {icon:"◈", title:"Managed IT Services", tag:"MSP", text:"Proactive monitoring, helpdesk, patching, endpoint management, backups and lifecycle planning — with one accountable technology partner."},
@@ -41,43 +45,87 @@ const faqs = [
 function App(){
   const [menuOpen,setMenuOpen]=useState(false);
   const [openFaq,setOpenFaq]=useState(0);
-  const [form,setForm]=useState({name:"",email:"",company:"",service:"",message:""});
-  const [sent,setSent]=useState(false);
+  const navRef=useRef(null);
+  const menuBtnRef=useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    // Move focus into the open drawer so keyboard/screen-reader users
+    // land somewhere sensible instead of the toggle button.
+    const focusables = navRef.current?.querySelectorAll('a, button');
+    focusables?.[0]?.focus();
+
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        menuBtnRef.current?.focus();
+        return;
+      }
+      // Basic focus trap: keep Tab cycling within the open drawer.
+      if (e.key === "Tab" && focusables?.length) {
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    function handleClickOutside(e) {
+      if (navRef.current && !navRef.current.contains(e.target) && !menuBtnRef.current?.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
+
   // Set when WebGL is unsupported/disabled, prefers-reduced-motion is on,
   // the shader fails to compile, or the GPU context is lost mid-session.
   const [heroBgFailed,setHeroBgFailed]=useState(false);
+  const [form,setForm]=useState({name:"",email:"",company:"",service:"",message:"",website:""});
+  const [status,setStatus]=useState("idle"); // idle | sending | sent | error
 
-  const submit=(e)=>{
+  const submit=async(e)=>{
     e.preventDefault();
-    // Every dynamic field must be individually encoded — a raw & % # or newline
-    // in any single field (most likely in the free-text message) will otherwise
-    // truncate or corrupt the mailto URL and silently drop parts of the enquiry.
-    const enc=(s)=>encodeURIComponent(s||"");
-    const bodyLines=[
-      `Name: ${form.name}`,
-      `Company: ${form.company}`,
-      `Email: ${form.email}`,
-      `Service: ${form.service}`,
-      "",
-      form.message
-    ];
-    const body=enc(bodyLines.join("\n"));
-    const subject=enc(`Cyber I.T Masters enquiry - ${form.service}`);
-    window.location.href=`mailto:info@mbulahenigroup.co.za?subject=${subject}&body=${body}`;
-    setSent(true);
+    if (status === "sending") return;
+    setStatus("sending");
+    try {
+      const res = await fetch(CONTACT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Request failed");
+      setStatus("sent");
+      setForm({name:"",email:"",company:"",service:"",message:"",website:""});
+    } catch (err) {
+      setStatus("error");
+    }
   };
 
   return <div className="app">
+    <a href="#main-content" className="skip-link">Skip to main content</a>
     <header className="nav">
       <a href="#home" className="brand"><img src="/logo.png" alt="Cyber I.T Masters" onError={e=>e.currentTarget.style.display="none"}/><span><b>CYBER</b> I.T MASTERS<small>IT MSP · SOLUTIONS · SOFTWARE</small></span></a>
-      <button className="menu-btn" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
-      <nav className={menuOpen?"nav-links open":"nav-links"}>
+      <button ref={menuBtnRef} className="menu-btn" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Toggle navigation" aria-expanded={menuOpen}>☰</button>
+      <nav ref={navRef} className={menuOpen?"nav-links open":"nav-links"}>
         {["Services","Solutions","DevOps","Industries","Process","Contact"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenuOpen(false)}>{x}</a>)}
         <a className="nav-cta" href="#contact">Book an Assessment →</a>
       </nav>
     </header>
 
-    <main>
+    <main id="main-content" tabIndex="-1">
       <section id="home" className="hero">
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           {heroBgFailed ? <HeroBackgroundFallback /> : (
@@ -174,21 +222,33 @@ STATUS:  ALL SYSTEMS GO`}</pre></div>
       <section id="contact" className="section contact-section">
         <div className="contact-grid">
           <div><div className="eyebrow">06 / START HERE</div><h2>LET'S FIX<br/><em>YOUR IT.</em></h2><p className="large-copy">Tell us what you are trying to improve, build or protect. We will route the enquiry to the right technology discipline.</p><div className="contact-details"><a href="tel:+27726650565">+27 72 665 0565</a><a href="mailto:info@mbulahenigroup.co.za">info@mbulahenigroup.co.za</a><span>Polokwane · Limpopo · South Africa</span></div></div>
-          <form onSubmit={submit} className="contact-form">
+          <form onSubmit={submit} className="contact-form" noValidate>
             <label>Name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
             <label>Company<input value={form.company} onChange={e=>setForm({...form,company:e.target.value})}/></label>
             <label>Email<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
             <label>What do you need?<select required value={form.service} onChange={e=>setForm({...form,service:e.target.value})}><option value="">Select a service</option><option>Managed IT Services</option><option>IT Solutions & Infrastructure</option><option>Cybersecurity</option><option>Microsoft 365 / Cloud</option><option>Website Development</option><option>Application Development</option><option>DevOps / Cloud Engineering</option><option>IT Procurement</option></select></label>
             <label className="full">Project / IT requirements<textarea required minLength="10" rows="5" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
-            <button className="btn primary full" type="submit">{sent?"Enquiry prepared ✓":"Send Technology Enquiry →"}</button>
-            <small className="form-note">Your enquiry opens your email client. Connect this form to your CRM/API in production.</small>
+            {/* Honeypot: hidden from sighted users and screen readers, visible to bots that
+                fill every field. Any value here means it's spam — checked server-side. */}
+            <label className="hp-field" aria-hidden="true">
+              Leave this field empty
+              <input tabIndex="-1" autoComplete="off" value={form.website} onChange={e=>setForm({...form,website:e.target.value})}/>
+            </label>
+            <button className="btn primary full" type="submit" disabled={status==="sending"}>
+              {status==="sending" ? "Sending…" : status==="sent" ? "Enquiry sent ✓" : "Send Technology Enquiry →"}
+            </button>
+            <div className={`form-status${status==="error"?" error":""}`} role="status" aria-live="polite">
+              {status==="sent" && "Thanks — your enquiry has been sent. We'll be in touch shortly."}
+              {status==="error" && "Something went wrong sending that. Please try again, or call/email us directly."}
+            </div>
+            <small className="form-note">Your enquiry is sent directly to our team — no email client required.</small>
           </form>
         </div>
       </section>
 
       <section id="faq" className="section faq-section">
         <div className="eyebrow">07 / FAQ</div><h2>QUESTIONS, <em>ANSWERED.</em></h2>
-        <div className="faq-list">{faqs.map(([q,a],i)=><div className={openFaq===i?"faq open":"faq"} key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}>{q}<span>+</span></button><div className="faq-answer">{a}</div></div>)}</div>
+        <div className="faq-list">{faqs.map(([q,a],i)=><div className={openFaq===i?"faq open":"faq"} key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}>{q}<span>+</span></button><div className="faq-answer"><div className="faq-answer-inner">{a}</div></div></div>)}</div>
       </section>
     </main>
 
