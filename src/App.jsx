@@ -1,5 +1,15 @@
-import React, { useState } from "react";
-import Lightfall from "./components/Lightfall";
+import React, { useState, Suspense, lazy } from "react";
+import HeroBackgroundBoundary from "./components/HeroBackgroundBoundary";
+
+// Deferred: ogl (WebGL) is a non-trivial chunk for a purely decorative
+// background — no reason to block first paint on it.
+const SoftAurora = lazy(() => import("./components/SoftAurora"));
+
+// Shown while SoftAurora is loading, when WebGL/animation isn't available
+// (reduced-motion, no WebGL support, GPU context loss), or if it throws.
+function HeroBackgroundFallback() {
+  return <div className="hero-bg-fallback" aria-hidden="true" />;
+}
 
 const services = [
   {icon:"◈", title:"Managed IT Services", tag:"MSP", text:"Proactive monitoring, helpdesk, patching, endpoint management, backups and lifecycle planning — with one accountable technology partner."},
@@ -33,11 +43,27 @@ function App(){
   const [openFaq,setOpenFaq]=useState(0);
   const [form,setForm]=useState({name:"",email:"",company:"",service:"",message:""});
   const [sent,setSent]=useState(false);
+  // Set when WebGL is unsupported/disabled, prefers-reduced-motion is on,
+  // the shader fails to compile, or the GPU context is lost mid-session.
+  const [heroBgFailed,setHeroBgFailed]=useState(false);
 
   const submit=(e)=>{
     e.preventDefault();
-    const body=`Name: ${form.name}%0ACompany: ${form.company}%0AEmail: ${form.email}%0AService: ${form.service}%0A%0A${form.message}`;
-    window.location.href=`mailto:info@mbulahenigroup.co.za?subject=Cyber I.T Masters enquiry - ${encodeURIComponent(form.service)}&body=${body}`;
+    // Every dynamic field must be individually encoded — a raw & % # or newline
+    // in any single field (most likely in the free-text message) will otherwise
+    // truncate or corrupt the mailto URL and silently drop parts of the enquiry.
+    const enc=(s)=>encodeURIComponent(s||"");
+    const bodyLines=[
+      `Name: ${form.name}`,
+      `Company: ${form.company}`,
+      `Email: ${form.email}`,
+      `Service: ${form.service}`,
+      "",
+      form.message
+    ];
+    const body=enc(bodyLines.join("\n"));
+    const subject=enc(`Cyber I.T Masters enquiry - ${form.service}`);
+    window.location.href=`mailto:info@mbulahenigroup.co.za?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
@@ -53,26 +79,33 @@ function App(){
 
     <main>
       <section id="home" className="hero">
-        <Lightfall
-          colors={["#A6C8FF", "#5227FF", "#FF9FFC"]}
-          backgroundColor="#0A29FF"
-          speed={1}
-          streakCount={8}
-          streakWidth={1}
-          streakLength={1}
-          glow={1}
-          density={1}
-          twinkle={1}
-          zoom={2}
-          backgroundGlow={1}
-          opacity={1}
-          mouseInteraction={true}
-          mouseStrength={1}
-          mouseRadius={0.6}
-          mouseDampening={0.15}
-          className="hero-lightfall"
-        />
-        <div className="hero-grid">
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          {heroBgFailed ? <HeroBackgroundFallback /> : (
+            <HeroBackgroundBoundary fallback={<HeroBackgroundFallback />}>
+              <Suspense fallback={<HeroBackgroundFallback />}>
+                <SoftAurora
+                  speed={0.6}
+                  scale={1.5}
+                  brightness={1.0}
+                  color1="#0A29FF"
+                  color2="#5227FF"
+                  noiseFrequency={2.5}
+                  noiseAmplitude={1.0}
+                  bandHeight={0.5}
+                  bandSpread={1.0}
+                  octaveDecay={0.1}
+                  layerOffset={0}
+                  colorSpeed={1.0}
+                  enableMouseInteraction={true}
+                  mouseInfluence={0.25}
+                  onError={()=>setHeroBgFailed(true)}
+                />
+              </Suspense>
+            </HeroBackgroundBoundary>
+          )}
+        </div>
+
+        <div className="hero-grid" style={{ position: 'relative', zIndex: 1 }}>
           <div className="hero-copy">
             <div className="eyebrow"><span className="pulse"></span> TECHNOLOGY PARTNER · POLOKWANE · SOUTH AFRICA</div>
             <h1>IT THAT <em>WORKS.</em><br/>SOLUTIONS THAT <em>SCALE.</em></h1>
