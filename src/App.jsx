@@ -11,9 +11,15 @@ function HeroBackgroundFallback() {
   return <div className="hero-bg-fallback" aria-hidden="true" />;
 }
 
-// Deployed Cloudflare Worker endpoint (see worker/index.js). Replace with
-// the real workers.dev or custom-domain URL once deployed.
-const CONTACT_ENDPOINT = "https://citm-contact.YOUR-SUBDOMAIN.workers.dev";
+// Using Netlify Forms — no external endpoint needed, Netlify intercepts
+// the POST at the CDN edge based on the form's `name` + `data-netlify`
+// attribute (see the <form> below, and the hidden static duplicate in
+// index.html that lets Netlify's build bot detect the form at all, since
+// it can't see JS-rendered markup).
+//
+// If you move off Netlify later, worker/index.js is a ready-to-deploy
+// Cloudflare Worker alternative — swap the submit() body back to a fetch
+// against that endpoint.
 
 const services = [
   {icon:"◈", title:"Managed IT Services", tag:"MSP", text:"Proactive monitoring, helpdesk, patching, endpoint management, backups and lifecycle planning — with one accountable technology partner."},
@@ -101,10 +107,10 @@ function App(){
     if (status === "sending") return;
     setStatus("sending");
     try {
-      const res = await fetch(CONTACT_ENDPOINT, {
+      const res = await fetch("/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ "form-name": "contact", ...form }).toString(),
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("sent");
@@ -222,17 +228,26 @@ STATUS:  ALL SYSTEMS GO`}</pre></div>
       <section id="contact" className="section contact-section">
         <div className="contact-grid">
           <div><div className="eyebrow">06 / START HERE</div><h2>LET'S FIX<br/><em>YOUR IT.</em></h2><p className="large-copy">Tell us what you are trying to improve, build or protect. We will route the enquiry to the right technology discipline.</p><div className="contact-details"><a href="tel:+27726650565">+27 72 665 0565</a><a href="mailto:info@mbulahenigroup.co.za">info@mbulahenigroup.co.za</a><span>Polokwane · Limpopo · South Africa</span></div></div>
-          <form onSubmit={submit} className="contact-form" noValidate>
-            <label>Name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
-            <label>Company<input value={form.company} onChange={e=>setForm({...form,company:e.target.value})}/></label>
-            <label>Email<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
-            <label>What do you need?<select required value={form.service} onChange={e=>setForm({...form,service:e.target.value})}><option value="">Select a service</option><option>Managed IT Services</option><option>IT Solutions & Infrastructure</option><option>Cybersecurity</option><option>Microsoft 365 / Cloud</option><option>Website Development</option><option>Application Development</option><option>DevOps / Cloud Engineering</option><option>IT Procurement</option></select></label>
-            <label className="full">Project / IT requirements<textarea required minLength="10" rows="5" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
+          <form
+            name="contact"
+            onSubmit={submit}
+            className="contact-form"
+            noValidate
+            data-netlify="true"
+            netlify-honeypot="website"
+          >
+            <input type="hidden" name="form-name" value="contact" />
+            <label>Name<input name="name" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
+            <label>Company<input name="company" value={form.company} onChange={e=>setForm({...form,company:e.target.value})}/></label>
+            <label>Email<input name="email" required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
+            <label>What do you need?<select name="service" required value={form.service} onChange={e=>setForm({...form,service:e.target.value})}><option value="">Select a service</option><option>Managed IT Services</option><option>IT Solutions & Infrastructure</option><option>Cybersecurity</option><option>Microsoft 365 / Cloud</option><option>Website Development</option><option>Application Development</option><option>DevOps / Cloud Engineering</option><option>IT Procurement</option></select></label>
+            <label className="full">Project / IT requirements<textarea name="message" required minLength="10" rows="5" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
             {/* Honeypot: hidden from sighted users and screen readers, visible to bots that
-                fill every field. Any value here means it's spam — checked server-side. */}
+                fill every field. Netlify's own spam filter checks this field (via
+                netlify-honeypot="website" above) — no server-side check needed on our side. */}
             <label className="hp-field" aria-hidden="true">
               Leave this field empty
-              <input tabIndex="-1" autoComplete="off" value={form.website} onChange={e=>setForm({...form,website:e.target.value})}/>
+              <input name="website" tabIndex="-1" autoComplete="off" value={form.website} onChange={e=>setForm({...form,website:e.target.value})}/>
             </label>
             <button className="btn primary full" type="submit" disabled={status==="sending"}>
               {status==="sending" ? "Sending…" : status==="sent" ? "Enquiry sent ✓" : "Send Technology Enquiry →"}

@@ -49,6 +49,21 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Netlify detects forms by parsing static HTML at deploy time — it
+      cannot see forms rendered client-side by React. This hidden duplicate,
+      with the same name/fields as the real form in App.jsx, is what lets
+      Netlify register the form and its POST endpoint. It's never shown to
+      users; the visible form is the React one.
+    -->
+    <form name="contact" data-netlify="true" netlify-honeypot="website" hidden>
+      <input type="text" name="name" />
+      <input type="text" name="company" />
+      <input type="email" name="email" />
+      <select name="service"><option>Managed IT Services</option></select>
+      <textarea name="message"></textarea>
+      <input type="text" name="website" />
+    </form>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
