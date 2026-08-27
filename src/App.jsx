@@ -99,8 +99,24 @@ function App(){
   // Set when WebGL is unsupported/disabled, prefers-reduced-motion is on,
   // the shader fails to compile, or the GPU context is lost mid-session.
   const [heroBgFailed,setHeroBgFailed]=useState(false);
+  // NEW: State to track if we are on mobile
+  const [isMobile, setIsMobile] = useState(false);
   const [form,setForm]=useState({name:"",email:"",company:"",service:"",message:"",website:""});
   const [status,setStatus]=useState("idle"); // idle | sending | sent | error
+
+  // NEW: Detect mobile screen size and update on resize
+  useEffect(() => {
+    const handleResize = () => {
+      // Change 768 to whatever breakpoint you prefer (tablet size, etc.)
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Check on initial load
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const submit=async(e)=>{
     e.preventDefault();
@@ -134,7 +150,8 @@ function App(){
     <main id="main-content" tabIndex="-1">
       <section id="home" className="hero">
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          {heroBgFailed ? <HeroBackgroundFallback /> : (
+          {/* UPDATED: Check if mobile OR failed */}
+          {heroBgFailed || isMobile ? <HeroBackgroundFallback /> : (
             <HeroBackgroundBoundary fallback={<HeroBackgroundFallback />}>
               <Suspense fallback={<HeroBackgroundFallback />}>
                 <SoftAurora
@@ -160,6 +177,7 @@ function App(){
         </div>
 
         <div className="hero-grid" style={{ position: 'relative', zIndex: 1 }}>
+          {/* ... rest of the Hero content ... */}
           <div className="hero-copy">
             <div className="eyebrow"><span className="pulse"></span> TECHNOLOGY PARTNER · POLOKWANE · SOUTH AFRICA</div>
             <h1>IT THAT <em>WORKS.</em><br/>SOLUTIONS THAT <em>SCALE.</em></h1>
@@ -177,6 +195,7 @@ function App(){
         </div>
       </section>
 
+      {/* The rest of your file (Metrics, Services, etc.) remains EXACTLY the same as before */}
       <section className="metrics">
         <div><b>01</b><span>MANAGED IT</span><small>Proactive support & monitoring</small></div>
         <div><b>02</b><span>IT SOLUTIONS</span><small>Infrastructure & cloud</small></div>
@@ -184,6 +203,8 @@ function App(){
         <div><b>04</b><span>DEVOPS</span><small>Automation & deployment</small></div>
       </section>
 
+      {/* Include the rest of your sections here exactly as they were */}
+      {/* ... Services, Solutions, DevOps, Industries, Process, Contact, FAQ, Footer ... */}
       <section id="services" className="section">
         <div className="section-head"><div><div className="eyebrow">01 / CORE SERVICES</div><h2>THE TECHNOLOGY<br/><em>STACK BEHIND</em> YOUR BUSINESS.</h2></div><p>From everyday IT operations to new digital products, we bring infrastructure, security and software engineering into one accountable service.</p></div>
         <div className="service-grid">{services.map(s=><article className="service-card" key={s.title}><div className="service-icon">{s.icon}</div><div className="service-tag">{s.tag}</div><h3>{s.title}</h3><p>{s.text}</p><a href="#contact">Discuss this service →</a></article>)}</div>
@@ -242,9 +263,6 @@ STATUS:  ALL SYSTEMS GO`}</pre></div>
             <label>Email<input name="email" required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
             <label>What do you need?<select name="service" required value={form.service} onChange={e=>setForm({...form,service:e.target.value})}><option value="">Select a service</option><option>Managed IT Services</option><option>IT Solutions & Infrastructure</option><option>Cybersecurity</option><option>Microsoft 365 / Cloud</option><option>Website Development</option><option>Application Development</option><option>DevOps / Cloud Engineering</option><option>IT Procurement</option></select></label>
             <label className="full">Project / IT requirements<textarea name="message" required minLength="10" rows="5" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label>
-            {/* Honeypot: hidden from sighted users and screen readers, visible to bots that
-                fill every field. Netlify's own spam filter checks this field (via
-                netlify-honeypot="website" above) — no server-side check needed on our side. */}
             <label className="hp-field" aria-hidden="true">
               Leave this field empty
               <input name="website" tabIndex="-1" autoComplete="off" value={form.website} onChange={e=>setForm({...form,website:e.target.value})}/>
